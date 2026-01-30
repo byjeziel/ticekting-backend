@@ -6,7 +6,7 @@ import { Ticket, TicketDocument } from './entities/ticket.entity';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { generateBookingReference } from '../utils/booking-reference.util';
 import { QRCodeUtil } from '../utils/qr-code.util';
-import { MercadoPagoService } from '../services/mercado-pago.service';
+import { MercadopagoService } from '../services/mercado-pago.service';
 import { EmailService } from '../services/email.service';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class TicketService {
   constructor(
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     @InjectModel(Ticket.name) private ticketModel: Model<TicketDocument>,
-    private mercadoPagoService: MercadoPagoService,
+    private mercadoPagoService: MercadopagoService,
     private emailService: EmailService,
   ) {}
 
@@ -50,7 +50,7 @@ export class TicketService {
       eventTime: createTicketDto.eventTime,
       quantity: createTicketDto.quantity,
       customerEmail: createTicketDto.customerEmail,
-      secret,
+      secret: '', // Placeholder - will be generated inside the method
     });
 
     const ticket = new this.ticketModel({
@@ -237,10 +237,6 @@ export class TicketService {
 
     if (ticket.status !== 'confirmed') {
       return { valid: false, message: 'Ticket not confirmed or already used' };
-    }
-
-    if (ticket.status === 'used') {
-      return { valid: false, message: 'Ticket already used' };
     }
 
     if (!ticket.emailVerified) {

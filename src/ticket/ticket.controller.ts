@@ -55,33 +55,45 @@ export class TicketController {
   async handleMercadoPagoWebhook(@Body() webhookData: any) {
     if (webhookData.type === 'payment') {
       const paymentId = webhookData.data.id;
-      const payment = await this.ticketService['mercadoPagoService'].getPayment(paymentId);
-      await this.ticketService.processPayment(paymentId, payment.status);
+      if (paymentId) {
+        const payment = await this.ticketService['mercadoPagoService'].getPayment(paymentId);
+        if (payment.status) {
+          await this.ticketService.processPayment(paymentId, payment.status);
+        }
+      }
     }
     return { status: 'ok' };
   }
 
-  @Get('payment/success')
+  @Get('mercadopago/payment/success')
   @ApiOperation({ summary: 'Payment success redirect' })
-  async paymentSuccess(@Query('payment_id') paymentId: string, @Query('external_reference') externalReference: string, @Res() res: Response) {
+  async paymentSuccess(@Query('payment_id') paymentId?: string, @Query('external_reference') externalReference?: string, @Res() res?: Response) {
     // Process the payment
-    const payment = await this.ticketService['mercadoPagoService'].getPayment(paymentId);
-    await this.ticketService.processPayment(paymentId, payment.status);
-    
-    // Redirect to frontend success page
-    res.redirect(`${process.env.FRONTEND_URL}/payment/success?reference=${externalReference}`);
+    if (paymentId && res) {
+      const payment = await this.ticketService['mercadoPagoService'].getPayment(paymentId);
+      if (payment.status) {
+        await this.ticketService.processPayment(paymentId, payment.status);
+      }
+      
+      // Redirect to frontend success page
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?reference=${externalReference}`);
+    }
   }
 
-  @Get('payment/failure')
+  @Get('mercadopago/payment/failure')
   @ApiOperation({ summary: 'Payment failure redirect' })
-  async paymentFailure(@Query('external_reference') externalReference: string, @Res() res: Response) {
-    res.redirect(`${process.env.FRONTEND_URL}/payment/failure?reference=${externalReference}`);
+  async paymentFailure(@Query('external_reference') externalReference?: string, @Res() res?: Response) {
+    if (res) {
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/failure?reference=${externalReference}`);
+    }
   }
 
-  @Get('payment/pending')
+  @Get('mercadopago/payment/pending')
   @ApiOperation({ summary: 'Payment pending redirect' })
-  async paymentPending(@Query('external_reference') externalReference: string, @Res() res: Response) {
-    res.redirect(`${process.env.FRONTEND_URL}/payment/pending?reference=${externalReference}`);
+  async paymentPending(@Query('external_reference') externalReference?: string, @Res() res?: Response) {
+    if (res) {
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/pending?reference=${externalReference}`);
+    }
   }
 
   @Delete(':id')

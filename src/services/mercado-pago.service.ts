@@ -1,80 +1,59 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as mercadopago from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 
 @Injectable()
-export class MercadoPagoService {
-  private mercadopago: any;
+export class MercadopagoService {
+  private client: MercadoPagoConfig;
 
-  constructor(private configService: ConfigService) {
-    this.mercadopago = mercadopago;
-    this.mercadopago.configure({
-      access_token: this.configService.get('MERCADO_PAGO_ACCESS_TOKEN'),
+  constructor() {
+    this.client = new MercadoPagoConfig({
+      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || 'APP_USR-2731051938078402-012923-3e2cffc1d1c27c1a22f428c9caa9e3e7-3169176684',
     });
   }
 
-  async createPaymentPreference(
-    ticketData: {
-      id: string;
-      bookingReference: string;
-      totalPrice: number;
-      currency: string;
-      quantity: number;
-      eventTitle: string;
-      customerEmail: string;
-    }
-  ) {
-    try {
-      const preference = {
-        items: [
-          {
-            id: ticketData.id,
-            title: `Tickets for ${ticketData.eventTitle}`,
-            description: `Booking Reference: ${ticketData.bookingReference}`,
-            quantity: ticketData.quantity,
-            unit_price: ticketData.totalPrice / ticketData.quantity,
-            currency_id: ticketData.currency,
-          },
-        ],
-        payer: {
-          email: ticketData.customerEmail,
-        },
+  async createPreference(ticketData: any) {
+    const preference = new Preference(this.client);
+    
+    const items = [{
+      id: ticketData.id,
+      title: ticketData.eventTitle,
+      quantity: ticketData.quantity,
+      unit_price: ticketData.totalPrice / ticketData.quantity,
+      currency_id: ticketData.currency || 'ARS',
+    }];
+
+    const result = await preference.create({
+      body: {
+        items: items,
+        external_reference: ticketData.bookingReference,
         back_urls: {
-          success: `${this.configService.get('FRONTEND_URL')}/payment/success`,
-          failure: `${this.configService.get('FRONTEND_URL')}/payment/failure`,
-          pending: `${this.configService.get('FRONTEND_URL')}/payment/pending`,
+          success: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success`,
+          failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/failure`,
+          pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/pending`,
         },
         auto_return: 'approved',
-        external_reference: ticketData.bookingReference,
-        notification_url: `${this.configService.get('BACKEND_URL')}/mercadopago/webhook`,
-      };
+        notification_url: process.env.MERCADOPAGO_WEBHOOK_URL || 'https://your-backend-url.com/tickets/mercadopago/webhook',
+      },
+    });
 
-      const response = await this.mercadopago.preferences.create(preference);
-      return {
-        preferenceId: response.body.id,
-        initPoint: response.body.init_point,
-        sandboxInitPoint: response.body.sandbox_init_point,
-      };
-    } catch (error) {
-      throw new Error(`Failed to create MercadoPago preference: ${error.message}`);
-    }
+    return {
+      preferenceId: result.id,
+      initPoint: result.init_point,
+      sandboxInitPoint: result.sandbox_init_point,
+    };
+  }
+
+  async createPaymentPreference(ticketData: any) {
+    return this.createPreference(ticketData);
   }
 
   async getPayment(paymentId: string) {
-    try {
-      const response = await this.mercadopago.payment.findById(paymentId);
-      return response.body;
-    } catch (error) {
-      throw new Error(`Failed to get payment: ${error.message}`);
-    }
+    const payment = new Payment(this.client);
+    return await payment.get({ id: paymentId });
   }
 
   async refundPayment(paymentId: string) {
-    try {
-      const response = await this.mercadopago.payment.refund(paymentId);
-      return response.body;
-    } catch (error) {
-      throw new Error(`Failed to refund payment: ${error.message}`);
-    }
+    const payment = new Payment(this.client);
+    return await payment.cancel({ id: paymentId });
   }
 }

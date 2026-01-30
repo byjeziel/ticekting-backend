@@ -4,7 +4,7 @@ import { TicketController } from './ticket.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Ticket, TicketSchema } from './entities/ticket.entity';
 import { Event, EventSchema } from '../event/entities/event.entity';
-import { MercadoPagoService } from '../services/mercado-pago.service';
+import { MercadopagoService } from '../services/mercado-pago.service';
 import { EmailService } from '../services/email.service';
 
 @Module({
@@ -15,6 +15,6 @@ import { EmailService } from '../services/email.service';
     ]),
   ],
   controllers: [TicketController],
-  providers: [TicketService, MercadoPagoService, EmailService],
+  providers: [TicketService, MercadopagoService, EmailService],
 })
 export class TicketModule {}
