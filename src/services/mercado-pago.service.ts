@@ -31,7 +31,6 @@ export class MercadopagoService {
           failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/failure`,
           pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/pending`,
         },
-        auto_return: 'approved',
         notification_url: process.env.MERCADOPAGO_WEBHOOK_URL || 'https://your-backend-url.com/tickets/mercadopago/webhook',
       },
     });

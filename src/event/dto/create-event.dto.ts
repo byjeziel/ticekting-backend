@@ -1,4 +1,4 @@
-import { IsString, IsArray, ValidateNested, IsInt, IsDateString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsArray, ValidateNested, IsInt, IsDateString, IsNumber, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -68,7 +68,4 @@ export class CreateEventDto {
   @Type(() => ScheduleItemDto)
   schedule: ScheduleItemDto[];
 
-  @ApiProperty({ example: '6527e2b2f1c2b2a1e8d7c9f0', description: 'ID del productor asociado' })
-  @IsString()
-  producer: string;
 }

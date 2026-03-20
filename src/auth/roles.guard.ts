@@ -7,7 +7,7 @@ import { UserRole } from '../producers/entities/user.entity';
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -18,26 +18,11 @@ export class RolesGuard implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
-    
-    if (!user || !user.sub) {
+
+    if (!user || !user.role) {
       return false;
     }
 
-    // Get UserService from the module context
-    const app = context.switchToHttp().getRequest().app;
-    const userService = app.get('UserService');
-    
-    if (!userService) {
-      console.error('UserService not found in application context');
-      return false;
-    }
-
-    const userRecord = await userService.findByAuth0Id(user.sub);
-
-    if (!userRecord) {
-      return false;
-    }
-
-    return requiredRoles.some((role) => userRecord.role === role);
+    return requiredRoles.some((role) => user.role === role);
   }
 }

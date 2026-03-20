@@ -17,7 +17,7 @@ export class ProducersService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+    return this.userModel.find({ role: 'producer' }).exec();
   }
 
   async findOne(id: string): Promise<User | null> {

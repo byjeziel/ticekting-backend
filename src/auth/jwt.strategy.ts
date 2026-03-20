@@ -3,10 +3,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private userService: UserService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKeyProvider: jwksRsa.passportJwtSecret({
@@ -22,12 +26,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // Include the full payload to be used by the RolesGuard
+    const userRecord = await this.userService.findByAuth0Id(payload.sub);
     return {
       sub: payload.sub,
       email: payload.email,
       name: payload.name,
-      // Add any other claims you need
+      role: userRecord?.role ?? null,
+      userId: (userRecord as any)?._id?.toString() ?? null,
     };
   }
 }

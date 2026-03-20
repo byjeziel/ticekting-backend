@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { TicketModule } from './ticket/ticket.module';
 import { UserModule } from './user/user.module';
+import { SeedModule } from './database/seeds/seed.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { UserModule } from './user/user.module';
     AuthModule,
     TicketModule,
     UserModule,
-    MongooseModule.forRoot('mongodb+srv://jeziel:byjeziel@ticketing.e2ajoye.mongodb.net/'),
+    SeedModule,
+    MongooseModule.forRoot('mongodb+srv://jeziel:byjeziel@ticketing.e2ajoye.mongodb.net/?appName=ticketing'),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -37,6 +37,10 @@ export class UserService {
     return this.userModel.find({ role, isActive: true }).exec();
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userModel.findOne({ email }).exec();
+  }
+
   async update(id: string, updateData: Partial<User>): Promise<User | null> {
     return this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }

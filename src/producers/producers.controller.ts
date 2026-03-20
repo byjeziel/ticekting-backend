@@ -1,14 +1,20 @@
-import {Controller, Get, Post, Body, Patch, Param, Delete} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { ProducersService } from './producers.service';
 import { CreateProducerDto } from './dto/create-producer.dto';
 import { UpdateProducerDto } from './dto/update-producer.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';;
+import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from './entities/user.entity';
 
 @Controller('producers')
 export class ProducersController {
   constructor(private readonly producersService: ProducersService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new producer' })
   @ApiResponse({ status: 201, description: 'Producer Created.' })
   @ApiBody({ type: CreateProducerDto })
@@ -32,6 +38,8 @@ export class ProducersController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update producer' })
   @ApiParam({ name: 'id', description: 'Producer ID' })
   @ApiBody({ type: UpdateProducerDto })
@@ -41,6 +49,8 @@ export class ProducersController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Remove producer' })
   @ApiParam({ name: 'id', description: 'Producer ID' })
   @ApiResponse({ status: 200, description: 'Producer deleted.' })

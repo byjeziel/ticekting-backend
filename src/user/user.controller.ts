@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -12,6 +12,17 @@ import { UserRole } from '../producers/entities/user.entity';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Post('sync')
+  @ApiOperation({ summary: 'Sync Auth0 user with DB (auto-create on first login)' })
+  @ApiResponse({ status: 201, description: 'User synced successfully.' })
+  sync(@Request() req, @Body() body: { email?: string; name?: string }) {
+    return this.userService.createOrUpdateFromAuth0({
+      sub: req.user.sub,
+      email: body.email ?? req.user.email ?? req.user.sub,
+      name: body.name ?? req.user.name ?? 'User',
+    });
+  }
 
   @Post()
   @Roles(UserRole.ADMIN)
@@ -52,6 +63,15 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'User found.' })
   findOne(@Param('id') id: string) {
     return this.userService.findById(id);
+  }
+
+  @Patch(':id/role')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update user role (Admin only)' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'User role updated.' })
+  updateRole(@Param('id') id: string, @Body() body: { role: UserRole }) {
+    return this.userService.update(id, { role: body.role });
   }
 
   @Delete(':id')
