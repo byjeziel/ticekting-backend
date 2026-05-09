@@ -136,6 +136,34 @@ export class TicketService {
       ticket.paymentStatus = 'paid';
       ticket.emailVerified = true;
       await ticket.save();
+
+      await this.eventModel.updateOne(
+        {
+          _id: ticket.event,
+          'schedule.date': ticket.eventDate,
+          'schedule.time': ticket.eventTime,
+        },
+        { $inc: { 'schedule.$.ticketsSold': ticket.quantity } },
+      );
+
+      try {
+        const event = await this.eventModel.findById(ticket.event);
+        if (event) {
+          await this.emailService.sendTicketEmail(ticket.customerEmail, {
+            bookingReference: ticket.bookingReference,
+            eventTitle: event.title,
+            eventDate: ticket.eventDate.toISOString(),
+            eventTime: ticket.eventTime,
+            quantity: ticket.quantity,
+            totalPrice: ticket.totalPrice,
+            currency: ticket.currency,
+            qrCode: ticket.qrCode || '',
+            emailVerificationToken: ticket.emailVerificationToken || '',
+          });
+        }
+      } catch {
+        // El fallo de email no bloquea la confirmación
+      }
     }
     return { confirmed: pending.length };
   }
@@ -171,19 +199,20 @@ export class TicketService {
       }
     }
 
+    const wasConfirmed = ticket.status === 'confirmed';
     ticket.status = 'cancelled';
     await ticket.save();
 
-    await this.eventModel.updateOne(
-      { 
-        _id: ticket.event,
-        'schedule.date': ticket.eventDate,
-        'schedule.time': ticket.eventTime
-      },
-      { 
-        $inc: { 'schedule.$.ticketsSold': -ticket.quantity }
-      }
-    );
+    if (wasConfirmed) {
+      await this.eventModel.updateOne(
+        {
+          _id: ticket.event,
+          'schedule.date': ticket.eventDate,
+          'schedule.time': ticket.eventTime,
+        },
+        { $inc: { 'schedule.$.ticketsSold': -ticket.quantity } },
+      );
+    }
 
     return ticket;
   }

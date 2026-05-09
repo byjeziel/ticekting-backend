@@ -27,7 +27,7 @@ export class MercadopagoService {
         items: items,
         external_reference: ticketData.bookingReference,
         back_urls: {
-          success: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success`,
+          success: `${process.env.BACKEND_URL || 'http://localhost:3000'}/tickets/mercadopago/payment/success`,
           failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/failure`,
           pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/pending`,
         },
